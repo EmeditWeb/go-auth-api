@@ -96,6 +96,7 @@ Here are the exact steps to get your CLI ready, connect to your database, and ex
 
 ```bash
 git clone https://github.com/Emeditweb/go-auth-api.git
+cd go-auth-api
 go mod tidy
 ```
 
