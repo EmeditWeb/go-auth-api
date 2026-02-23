@@ -1,0 +1,43 @@
+# --- Secrets & Configuration ---
+
+.env
+.env.local
+.env.*.local
+
+# --- Binaries & Executables ---
+# Ignore the compiled output of your app
+bin/
+api
+go-auth-api
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# --- Dependency Management ---
+# Go modules are handled via go.mod/go.sum, but local vendoring is ignored
+vendor/
+
+# --- Tooling & IDEs ---
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (GoLand/IntelliJ)
+.idea/
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# --- Testing & Coverage ---
+*.out
+*.test
+coverage.txt
