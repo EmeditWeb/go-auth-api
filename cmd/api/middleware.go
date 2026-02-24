@@ -1,9 +1,14 @@
 package main
 
 import (
+	"net"
+	"sync"
+	"time"
 	"errors"
 	"net/http"
 	"strings"
+
+	"golang.org/x/time/rate"
 
 	"github.com/Emeditweb/go-auth-api/internal/data"
 )
@@ -52,4 +57,79 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 	})
+}
+
+// RBAC mechnism
+func (app *Application) requireRole(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        user := app.contextGetUser(r)
+
+        if user.IsAnonymous() {
+            app.authenticationRequiredResponse(w, r)
+            return
+        }
+
+        if user.UserRole != "admin" && user.UserRole != requiredRole {
+            app.notPermittedResponse(w, r)
+            return
+        }
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+func (app *Application) rateLimit(next http.Handler) http.Handler {
+    // Define a client struct to hold the limiter and last seen time for each IP
+    type client struct {
+        limiter  *rate.Limiter
+        lastSeen time.Time
+    }
+
+    var (
+        mu      sync.Mutex
+        clients = make(map[string]*client)
+    )
+
+    // Launch a background goroutine to remove old entries from the map every minute
+    go func() {
+        for {
+            time.Sleep(time.Minute)
+            mu.Lock()
+            for ip, client := range clients {
+                if time.Since(client.lastSeen) > 3*time.Minute {
+                    delete(clients, ip)
+                }
+            }
+            mu.Unlock()
+        }
+    }()
+
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Extract the IP address from the request
+        ip, _, err := net.SplitHostPort(r.RemoteAddr)
+        if err != nil {
+            app.errorResponse(w, r, http.StatusInternalServerError, err.Error())
+            return
+        }
+
+        mu.Lock()
+
+        // If IP isn't in map, initialize a new limiter (2 requests per second, burst of 4)
+        if _, found := clients[ip]; !found {
+            clients[ip] = &client{
+                limiter: rate.NewLimiter(2, 4), 
+            }
+        }
+
+        clients[ip].lastSeen = time.Now()
+
+        if !clients[ip].limiter.Allow() {
+            mu.Unlock()
+            app.rateLimitExceededResponse(w, r)
+            return
+        }
+
+        mu.Unlock()
+        next.ServeHTTP(w, r)
+    })
 }

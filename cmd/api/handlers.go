@@ -73,7 +73,7 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	user := data.User{
 		Username: input.Username,
 		Email:    input.Email,
-		Role:     "user",
+		UserRole:     "user",
 	}
 
 	err = user.Password.Set(input.Password)

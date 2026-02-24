@@ -6,7 +6,10 @@ require golang.org/x/crypto v0.48.0
 
 require github.com/lib/pq v1.11.2
 
-require github.com/joho/godotenv v1.5.1 // indirect
+require (
+	github.com/joho/godotenv v1.5.1 // indirect
+	golang.org/x/time v0.14.0 // indirect
+)
 
 // require (
 // 	github.com/go-playground/validator/v10 v10.22.0 // indirect

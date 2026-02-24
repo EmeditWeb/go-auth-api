@@ -242,6 +242,63 @@ http://localhost:8080/v1/tokens/logout
 
 ---
 
+### Testing the Engineering Pillars
+
+#### 1. Role-Based Access Control (RBAC)
+
+```bash
+# Login as admin
+curl -i -X POST -d '{"email": "admin@example.com", "password": "password123"}' http://localhost:8080/v1/tokens/authentication
+
+# Get admin token
+curl -i -X POST -d '{"email": "admin@example.com", "password": "password123"}' http://localhost:8080/v1/tokens/authentication
+
+# Get admin metrics
+curl -i -H "Authorization: Bearer <ADMIN_TOKEN>" http://localhost:8080/v1/admin/metrics
+```
+
+#### 2. Rate Limiting
+
+Tests the Token Buckets(4) algorithm.
+
+```Bash
+for i in {1..10}; do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/v1/healthcheck; done
+
+```
+
+#### 3. Graceful Shutdown
+##### Method 1
+Build the api binary
+```Bash
+go build -o api ./cmd/api/*.go
+```
+Run the application
+```Bash
+./api
+```
+Finally, kill the application with either of the following commands
+```Bash
+kill -SIGINT api 
+``` 
+```Bash
+pkill -SIGTERM -f api
+```
+you'd then see the following output:
+```
+INFO 2026/02/24 12:17:04 shutting down server | signal: interrupt
+INFO 2026/02/24 12:17:04 completing background tasks | addr: :8080
+INFO 2026/02/24 12:17:04 stopped server | addr: :8080
+```
+##### Method 2
+Just run the application and kill it with Ctrl+C
+```Bash
+go run ./cmd/api/*.go
+```
+Clean up the binary
+```Bash
+rm api
+```
+---
 ## 👤 Author
 **[Emmanuel Itighise](https://github.com/Emeditweb)**  
 Microbiologist | Data Analyst | AI-Native Software Engineering Fellow

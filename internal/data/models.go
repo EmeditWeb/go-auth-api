@@ -42,7 +42,7 @@ type UserModel struct {
 // InsertUser inserts a new user into the database 
 func (m *UserModel) InsertUser(user *User) error {
 	query := `
-        INSERT INTO users (username, email, password_hash, role)
+        INSERT INTO users (username, email, password_hash, user_role)
         VALUES ($1, $2, $3, $4)
         RETURNING id, created_at`
 
@@ -50,7 +50,7 @@ func (m *UserModel) InsertUser(user *User) error {
 		user.Username,
 		user.Email,
 		user.Password.hash,
-		user.Role,
+		user.UserRole,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -63,7 +63,7 @@ func (m *UserModel) InsertUser(user *User) error {
 // GetUserByEmail retrieves a user from the database based on their email address
 func (m *UserModel) GetUserByEmail(email string) (*User, error) {
 	query := `
-        SELECT id, created_at, username, email, password_hash, role
+        SELECT id, created_at, username, email, password_hash, user_role
         FROM users
         WHERE email = $1`
 
@@ -78,7 +78,7 @@ func (m *UserModel) GetUserByEmail(email string) (*User, error) {
 		&user.Username,
 		&user.Email,
 		&user.Password.hash,
-		&user.Role,
+		&user.UserRole,
 	)
 
 	if err != nil {
@@ -143,7 +143,7 @@ type User struct {
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
-	Role      string    `json:"role"`
+	UserRole      string    `json:"user_role"`
 }
 
 type password struct {
@@ -181,7 +181,7 @@ func (m *UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error
     tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
     query := `
-        SELECT users.id, users.created_at, users.username, users.email, users.password_hash, users.role
+        SELECT users.id, users.created_at, users.username, users.email, users.password_hash, users.user_role
         FROM users
         INNER JOIN tokens
         ON users.id = tokens.user_id
@@ -202,7 +202,7 @@ func (m *UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error
         &user.Username,
         &user.Email,
         &user.Password.hash,
-        &user.Role,
+        &user.UserRole,
     )
 
     if err != nil {
